@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRadiusWallet } from '@radiustechsystems/ai-agent-wallet';
+import { ethers } from 'ethers';
+import { BLOCKCHAIN_CONFIG, APP_CONFIG } from '@/lib/constants';
+import { transferUSDC } from '@/lib/radius/token';
 
 // Constants for payment calculation
-const PAYMENT_PER_CPU_SECOND = 0.0001; // ETH per CPU second
-const PAYMENT_PER_GPU_SECOND = 0.001;  // ETH per GPU second
+const PAYMENT_PER_CPU_SECOND = APP_CONFIG.RESOURCES.DEFAULT_CPU_PRICE / 3600; // USDC per CPU second
+const PAYMENT_PER_GPU_SECOND = APP_CONFIG.RESOURCES.DEFAULT_GPU_PRICE / 3600;  // USDC per GPU second
 
 // Interface for compute usage metrics
 interface ComputeUsageMetrics {
@@ -76,9 +78,13 @@ export async function POST(request: NextRequest) {
     const gpuPayment = calculateGpuPayment(body.gpuMemory, body.gpuSeconds);
     const totalPayment = cpuPayment + gpuPayment;
     
-    // In a real application, we would use the Radius wallet to process the payment
-    // For this demo, we'll simulate the payment process
-    const transactionHash = await simulatePaymentTransaction(body.consumerWalletAddress, body.providerWalletAddress, totalPayment);
+    // Process the payment using USDC on Radius Testnet
+    // If environment variables aren't set, it will fall back to simulation
+    const transactionHash = await processPaymentTransaction(
+      body.consumerWalletAddress, 
+      body.providerWalletAddress, 
+      totalPayment
+    );
     
     // Record the payment transaction
     const paymentTransaction: PaymentTransaction = {
@@ -113,26 +119,39 @@ function calculateGpuPayment(gpuMemory: number, gpuSeconds: number): number {
   return gpuMemory * gpuSeconds * PAYMENT_PER_GPU_SECOND;
 }
 
-// Helper function to simulate a payment transaction
+// Process a payment transaction using USDC on Radius Testnet
+async function processPaymentTransaction(fromAddress: string, toAddress: string, amount: number): Promise<string> {
+  try {
+    // Check if we have the private key in environment variables
+    const privateKey = process.env.CONSUMER_PRIVATE_KEY;
+    if (!privateKey) {
+      console.warn('No private key found in environment variables, using simulated transaction');
+      return simulatePaymentTransaction(fromAddress, toAddress, amount);
+    }
+    
+    // Create a provider connected to Radius Testnet
+    const provider = new ethers.JsonRpcProvider(BLOCKCHAIN_CONFIG.RPC_URL);
+    
+    // Create a wallet with the private key
+    const wallet = new ethers.Wallet(privateKey, provider);
+    
+    // Transfer USDC tokens
+    const receipt = await transferUSDC(wallet, toAddress, amount);
+    
+    if (!receipt || !receipt.hash) {
+      throw new Error('Transaction failed or receipt not available');
+    }
+    
+    return receipt.hash;
+  } catch (error) {
+    console.error('Error processing payment with USDC:', error);
+    // Fall back to simulation if the real transaction fails
+    return simulatePaymentTransaction(fromAddress, toAddress, amount);
+  }
+}
+
+// Helper function to simulate a payment transaction (fallback)
 async function simulatePaymentTransaction(fromAddress: string, toAddress: string, amount: number): Promise<string> {
-  // In a real application, we would use the Radius wallet to send the transaction
-  // For this demo, we'll generate a fake transaction hash
-  
-  // This is how we would implement it with the actual Radius wallet:
-  /*
-  const consumerWallet = await createRadiusWallet({
-    rpcUrl: process.env.RPC_PROVIDER_URL,
-    privateKey: process.env.CONSUMER_PRIVATE_KEY
-  });
-  
-  const tx = await consumerWallet.sendTransaction({
-    to: toAddress,
-    value: BigInt(Math.floor(amount * 1e18))
-  });
-  
-  return tx.hash;
-  */
-  
   // For demo purposes, generate a random transaction hash
   const randomBytes = new Uint8Array(32);
   crypto.getRandomValues(randomBytes);
@@ -141,5 +160,6 @@ async function simulatePaymentTransaction(fromAddress: string, toAddress: string
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 500));
   
+  console.log(`[SIMULATED] Transferred ${amount} USDC from ${fromAddress} to ${toAddress}`);
   return txHash;
 }

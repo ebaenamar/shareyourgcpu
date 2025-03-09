@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 interface WalletManagerProps {
   walletAddress?: string;
   balance?: number;
+  usdcBalance?: number;
   network?: string;
   onConnect: () => void;
   onDisconnect: () => void;
@@ -13,6 +14,7 @@ interface WalletManagerProps {
 export default function WalletManager({ 
   walletAddress, 
   balance = 0, 
+  usdcBalance = 0,
   network = 'Radius Testnet',
   onConnect, 
   onDisconnect 
@@ -60,11 +62,20 @@ export default function WalletManager({
             <div className="font-mono text-sm truncate">{walletAddress}</div>
           </div>
           
-          <div className="bg-gray-700/30 p-4 rounded-lg mb-6">
-            <div className="text-sm text-gray-400 mb-1">Balance</div>
-            <div className="text-xl font-semibold">{balance.toFixed(6)} ETH</div>
-            <div className="text-xs text-gray-400">
-              u2248 ${(balance * 3000).toFixed(2)} USD
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-gray-700/30 p-4 rounded-lg">
+              <div className="text-sm text-gray-400 mb-1">ETH Balance</div>
+              <div className="text-xl font-semibold">{balance.toFixed(6)} ETH</div>
+              <div className="text-xs text-gray-400">
+                ≈ ${(balance * 3000).toFixed(2)} USD
+              </div>
+            </div>
+            <div className="bg-gray-700/30 p-4 rounded-lg">
+              <div className="text-sm text-gray-400 mb-1">USDC Balance</div>
+              <div className="text-xl font-semibold">{usdcBalance.toFixed(2)} USDC</div>
+              <div className="text-xs text-gray-400">
+                ≈ ${usdcBalance.toFixed(2)} USD
+              </div>
             </div>
           </div>
           
@@ -96,12 +107,16 @@ export default function WalletManager({
                   <span className="font-mono text-xs truncate max-w-[200px]">{walletAddress}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Balance</span>
+                  <span className="text-gray-400">ETH Balance</span>
                   <span>{balance.toFixed(6)} ETH</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">USD Value</span>
-                  <span>${(balance * 3000).toFixed(2)}</span>
+                  <span className="text-gray-400">USDC Balance</span>
+                  <span>{usdcBalance.toFixed(2)} USDC</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Total USD Value</span>
+                  <span>${((balance * 3000) + usdcBalance).toFixed(2)}</span>
                 </div>
               </div>
             </div>

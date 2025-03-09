@@ -1,11 +1,13 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { BLOCKCHAIN_CONFIG } from '@/lib/constants';
 
 // Types for our context
 interface WalletInfo {
   address: string;
   balance: number;
+  usdcBalance: number;
   network: string;
   isConnected: boolean;
 }
@@ -81,7 +83,8 @@ const AppContext = createContext<AppContextType>({
   wallet: {
     address: '',
     balance: 0,
-    network: 'Radius Testnet',
+    usdcBalance: 0,
+    network: BLOCKCHAIN_CONFIG.NETWORK,
     isConnected: false
   },
   connectWallet: async () => {},
@@ -115,7 +118,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [wallet, setWallet] = useState<WalletInfo>({
     address: '',
     balance: 0,
-    network: 'Radius Testnet',
+    usdcBalance: 0,
+    network: BLOCKCHAIN_CONFIG.NETWORK,
     isConnected: false
   });
   
@@ -153,7 +157,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setWallet({
         address,
         balance: 1.5,
-        network: 'Radius Testnet',
+        usdcBalance: 100, // Mock USDC balance for demo purposes
+        network: BLOCKCHAIN_CONFIG.NETWORK,
         isConnected: true
       });
       
@@ -175,7 +180,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setWallet({
       address: '',
       balance: 0,
-      network: 'Radius Testnet',
+      usdcBalance: 0,
+      network: BLOCKCHAIN_CONFIG.NETWORK,
       isConnected: false
     });
     setIsProviding(false);
@@ -382,16 +388,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!isProviding || !wallet.isConnected) return;
     
     const interval = setInterval(() => {
-      // Simulate earning some ETH
+      // Simulate earning some USDC
+      const earningAmount = 0.01; // Higher amount since USDC has different value scale
+      
       setWallet(prev => ({
         ...prev,
-        balance: prev.balance + 0.0001
+        usdcBalance: prev.usdcBalance + earningAmount
       }));
       
       // Simulate a new transaction
       const newTransaction = {
         id: 'tx-' + Date.now(),
-        amount: 0.0001,
+        amount: earningAmount,
         timestamp: new Date().toISOString(),
         type: 'incoming' as const,
         status: 'completed' as const

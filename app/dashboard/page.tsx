@@ -2,13 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import WalletManager from '@/components/WalletManager';
+import { useAppContext } from '@/context/AppContext';
+import { BLOCKCHAIN_CONFIG } from '@/lib/constants';
 
 export default function Dashboard() {
-  const [isProviding, setIsProviding] = useState(false);
+  const { 
+    wallet, 
+    connectWallet, 
+    disconnectWallet, 
+    isProviding, 
+    toggleProviding 
+  } = useAppContext();
+  
   const [cpuUsage, setCpuUsage] = useState(0);
   const [gpuUsage, setGpuUsage] = useState(0);
-  const [earnings, setEarnings] = useState(0);
-  const [walletAddress, setWalletAddress] = useState('');
   const [taskHistory, setTaskHistory] = useState([
     {
       id: 'task-1',
@@ -42,16 +50,11 @@ export default function Dashboard() {
       const interval = setInterval(() => {
         setCpuUsage(Math.random() * 80 + 10);
         setGpuUsage(Math.random() * 70 + 5);
-        setEarnings(prev => prev + (Math.random() * 0.0001));
       }, 5000);
       
       return () => clearInterval(interval);
     }
   }, [isProviding]);
-
-  const toggleProviding = () => {
-    setIsProviding(!isProviding);
-  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -96,16 +99,16 @@ export default function Dashboard() {
         
         <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
           <h2 className="text-xl font-semibold mb-4">Earnings</h2>
-          <div className="text-3xl font-bold mb-2">{earnings.toFixed(6)} ETH</div>
-          <div className="text-sm text-gray-400 mb-4">≈ ${(earnings * 3000).toFixed(2)} USD</div>
+          <div className="text-3xl font-bold mb-2">{wallet.usdcBalance.toFixed(2)} USDC</div>
+          <div className="text-sm text-gray-400 mb-4">≈ ${wallet.usdcBalance.toFixed(2)} USD</div>
           <div className="text-sm mb-4">
             <div className="flex justify-between mb-1">
               <span>Today:</span>
-              <span>{(earnings * 0.4).toFixed(6)} ETH</span>
+              <span>{(wallet.usdcBalance * 0.4).toFixed(2)} USDC</span>
             </div>
             <div className="flex justify-between">
               <span>This Week:</span>
-              <span>{(earnings).toFixed(6)} ETH</span>
+              <span>{wallet.usdcBalance.toFixed(2)} USDC</span>
             </div>
           </div>
           <button className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">
@@ -113,47 +116,35 @@ export default function Dashboard() {
           </button>
         </div>
         
-        <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
-          <h2 className="text-xl font-semibold mb-4">Wallet</h2>
-          <div className="mb-4">
-            <label className="block text-sm mb-1">Your Wallet Address</label>
-            <input
-              type="text"
-              value={walletAddress}
-              onChange={(e) => setWalletAddress(e.target.value)}
-              placeholder="Enter your ETH wallet address"
-              className="w-full p-2 bg-gray-900 border border-gray-700 rounded"
-            />
-          </div>
-          <div className="flex justify-between text-sm mb-4">
-            <span>Network:</span>
-            <span className="text-green-400">Radius Testnet</span>
-          </div>
-          <button className="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium">
-            Connect Wallet
-          </button>
-        </div>
+        <WalletManager
+          walletAddress={wallet.address}
+          balance={wallet.balance}
+          usdcBalance={wallet.usdcBalance}
+          network={wallet.network}
+          onConnect={connectWallet}
+          onDisconnect={disconnectWallet}
+        />
       </div>
       
       <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700 mb-8">
         <h2 className="text-xl font-semibold mb-4">Resource Configuration</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm mb-1">CPU Price (ETH per hour)</label>
+            <label className="block text-sm mb-1">CPU Price (USDC per hour)</label>
             <input
               type="number"
-              defaultValue={0.001}
-              step={0.0001}
+              defaultValue={0.5}
+              step={0.1}
               min={0}
               className="w-full p-2 bg-gray-900 border border-gray-700 rounded"
             />
           </div>
           <div>
-            <label className="block text-sm mb-1">GPU Price (ETH per hour)</label>
+            <label className="block text-sm mb-1">GPU Price (USDC per hour)</label>
             <input
               type="number"
-              defaultValue={0.01}
-              step={0.001}
+              defaultValue={2.0}
+              step={0.1}
               min={0}
               className="w-full p-2 bg-gray-900 border border-gray-700 rounded"
             />
@@ -193,7 +184,7 @@ export default function Dashboard() {
                 <th className="text-left py-2">Task ID</th>
                 <th className="text-left py-2">Type</th>
                 <th className="text-left py-2">Duration</th>
-                <th className="text-left py-2">Earnings</th>
+                <th className="text-left py-2">Earnings (USDC)</th>
                 <th className="text-left py-2">Status</th>
                 <th className="text-left py-2">Timestamp</th>
               </tr>
