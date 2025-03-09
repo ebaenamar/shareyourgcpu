@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import WalletManager from '@/components/WalletManager';
+import NetworkVerification from '@/components/NetworkVerification';
 import { useAppContext } from '@/context/AppContext';
 import { BLOCKCHAIN_CONFIG } from '@/lib/constants';
 
@@ -127,6 +128,14 @@ export default function Dashboard() {
       </div>
       
       <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700 mb-8">
+        <h2 className="text-xl font-semibold mb-4">Network Verification</h2>
+        <p className="text-sm text-gray-400 mb-4">
+          Verify that your application is connected to the Radius Network. This information proves that all transactions and operations are performed on the Radius blockchain.
+        </p>
+        <NetworkVerification />
+      </div>
+      
+      <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700 mb-8">
         <h2 className="text-xl font-semibold mb-4">Resource Configuration</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -195,7 +204,7 @@ export default function Dashboard() {
                   <td className="py-2">{task.id}</td>
                   <td className="py-2">{task.type}</td>
                   <td className="py-2">{task.duration}</td>
-                  <td className="py-2">{task.earnings.toFixed(6)} ETH</td>
+                  <td className="py-2">{task.earnings.toFixed(2)} USDC</td>
                   <td className="py-2">
                     <span className="px-2 py-1 rounded-full text-xs bg-green-500/20 text-green-400">
                       {task.status}
