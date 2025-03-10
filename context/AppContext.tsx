@@ -3,6 +3,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { BLOCKCHAIN_CONFIG } from '@/lib/constants';
 
+import { ethers } from 'ethers';
+
 // Types for our context
 interface WalletInfo {
   address: string;
@@ -10,6 +12,8 @@ interface WalletInfo {
   usdcBalance: number;
   network: string;
   isConnected: boolean;
+  provider: ethers.Provider | null;
+  signer: ethers.Signer | null;
 }
 
 interface ComputeResource {
@@ -85,7 +89,9 @@ const AppContext = createContext<AppContextType>({
     balance: 0,
     usdcBalance: 0,
     network: BLOCKCHAIN_CONFIG.NETWORK,
-    isConnected: false
+    isConnected: false,
+    provider: null,
+    signer: null
   },
   connectWallet: async () => {},
   disconnectWallet: () => {},
@@ -120,7 +126,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     balance: 0,
     usdcBalance: 0,
     network: BLOCKCHAIN_CONFIG.NETWORK,
-    isConnected: false
+    isConnected: false,
+    provider: null,
+    signer: null
   });
   
   // Resource provider state
@@ -154,12 +162,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Generate a random wallet address
       const address = '0x' + [...Array(40)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
       
+      // Create mock provider and signer for ethers integration
+      const provider = new ethers.JsonRpcProvider('https://rpc.ankr.com/eth');
+      const privateKey = '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+      const signer = new ethers.Wallet(privateKey, provider);
+      
       setWallet({
         address,
         balance: 1.5,
         usdcBalance: 100, // Mock USDC balance for demo purposes
         network: BLOCKCHAIN_CONFIG.NETWORK,
-        isConnected: true
+        isConnected: true,
+        provider,
+        signer
       });
       
       // Load provider resources if any
@@ -182,7 +197,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       balance: 0,
       usdcBalance: 0,
       network: BLOCKCHAIN_CONFIG.NETWORK,
-      isConnected: false
+      isConnected: false,
+      provider: null,
+      signer: null
     });
     setIsProviding(false);
     setProviderResources([]);
